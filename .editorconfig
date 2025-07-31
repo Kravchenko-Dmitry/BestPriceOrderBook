@@ -1,0 +1,48 @@
+# This is the top-most EditorConfig file
+root = true
+
+########################################
+# Global Settings (applies to all files)
+########################################
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 4
+tab_width = 4
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+########################################
+# C# Code Style Rules
+########################################
+
+[*.cs]
+
+# Require 'var' for locals when type is obvious
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = false:suggestion
+
+# Require braces for all control statements
+csharp_prefer_braces = true:error
+
+# New line preferences
+csharp_new_line_before_open_brace = all
+csharp_new_line_between_query_expression_clauses = true
+
+# Expression-bodied members
+csharp_style_expression_bodied_methods = when_possible:suggestion
+csharp_style_expression_bodied_properties = when_possible:suggestion
+
+# Pattern matching preferences
+csharp_style_pattern_matching_over_is_with_cast_check = true:suggestion
+csharp_style_pattern_matching_over_as_with_null_check = true:suggestion
+
+# Null-checking preferences
+csharp_style_throw_expression = true:suggestion
+csharp_style_conditional_delegate_call = true:suggestion
+
+# Prefer 'this.' qualification for members
+dotnet_style_qualific
