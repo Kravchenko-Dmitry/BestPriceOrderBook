@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Logging;
-using OrderBookAlgorithm.DataClasses;
+using OrderBookAlgorithm.DomainClasses;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 

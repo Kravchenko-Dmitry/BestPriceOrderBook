@@ -1,4 +1,4 @@
-namespace OrderBookApi.DTO;
+namespace OrderBookApi.Dto;
 
 public enum OrderKind
 {

@@ -1,13 +1,13 @@
-using OrderBookAlgorithm.DataClasses;
-using OrderBookApi.DTO;
-using OrderKind = OrderBookAlgorithm.DataClasses.OrderKind;
-using OrderType = OrderBookAlgorithm.DataClasses.OrderType;
+using OrderBookAlgorithm.DomainClasses;
+using OrderBookApi.Dto;
+using OrderKind = OrderBookAlgorithm.DomainClasses.OrderKind;
+using OrderType = OrderBookAlgorithm.DomainClasses.OrderType;
 
 namespace OrderBookApi.Mapping;
 
 public static class OrderMappings
 {
-    public static Order ToDomainOrder(this PlaceOrderRequest request)
+    public static Order ConvertToDomainOrder(this PlaceOrderRequest request)
     {
         return new Order
         {

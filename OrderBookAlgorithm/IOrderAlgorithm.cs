@@ -1,4 +1,4 @@
-using OrderBookAlgorithm.DataClasses;
+using OrderBookAlgorithm.DomainClasses;
 
 namespace OrderBookAlgorithm;
 

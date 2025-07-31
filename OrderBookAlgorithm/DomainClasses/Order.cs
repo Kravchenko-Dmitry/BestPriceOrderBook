@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace OrderBookAlgorithm.DataClasses;
+namespace OrderBookAlgorithm.DomainClasses;
 
 public class Order
 {

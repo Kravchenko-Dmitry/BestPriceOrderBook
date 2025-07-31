@@ -1,4 +1,4 @@
-namespace OrderBookAlgorithm.DataClasses;
+namespace OrderBookAlgorithm.DomainClasses;
 
 public enum OrderType
 {

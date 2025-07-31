@@ -1,6 +1,6 @@
-namespace OrderBookAlgorithm.DataClasses;
+namespace OrderBookAlgorithm.DomainClasses;
 
-public class BalanceSheet
+public class Balance
 {
     public decimal Crypto { get; set; }
     public decimal Euro { get; set; }

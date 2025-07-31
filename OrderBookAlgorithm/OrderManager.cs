@@ -1,4 +1,4 @@
-using OrderBookAlgorithm.DataClasses;
+using OrderBookAlgorithm.DomainClasses;
 
 namespace OrderBookAlgorithm;
 
@@ -25,7 +25,6 @@ public class OrderManager
     public async Task<List<Order>> ProvideBestPriceOrdersAsync(Order customerOrder)
     {
         var availableOrderRecords = await _orderBookRepository.LoadOrderBookDataAsync();
-        var result = _exchangeAlgorithm.GetOrdersWithBestPrice(customerOrder, availableOrderRecords);
-        return result;
+        return _exchangeAlgorithm.GetOrdersWithBestPrice(customerOrder, availableOrderRecords);
     }
 }
