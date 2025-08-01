@@ -1,47 +1,44 @@
+using Microsoft.Extensions.Logging;
 using OrderBookAlgorithm.DomainClasses;
 
 namespace OrderBookAlgorithm;
 
-public class OrderAlgorithm : IOrderAlgorithm
+public class OrderAlgorithm(ILogger<OrderAlgorithm> logger) : IOrderAlgorithm
 {
+    private readonly ILogger<OrderAlgorithm> _logger = logger;
+
     public List<Order> GetOrdersWithBestPrice(Order customerOrder, List<OrderBookRecord> availableOrders)
     {
         ValidateInputs(customerOrder, availableOrders);
 
-        switch (customerOrder.Type)
+        return customerOrder.Type switch
         {
             // BUY CASE: Customer wants to buy BTC -> limited by each customer Euro account balance on the exchanges as customer can not buy more BTC as he has Euros
-            case OrderType.Buy:
-                {
-                    return ProcessBuyOrders(customerOrder, availableOrders);
-                }
-
+            OrderType.Buy => ProcessBuyOrders(customerOrder, availableOrders),
             // SELL CASE: Customer wants to sell BTC -> limited by customer account's BTC amount on each exchange as customer can non sell BTC which he does not have
-            case OrderType.Sell:
-                {
-                    return ProcessSellOrders(customerOrder, availableOrders);
-                }
-
-            default:
-                throw new InvalidOperationException($"Unsupported order type: {customerOrder.Type}");
-        }
+            OrderType.Sell => ProcessSellOrders(customerOrder, availableOrders),
+            _ => throw new InvalidOperationException($"Unsupported order type: {customerOrder.Type}")
+        };
     }
 
-    private static void ValidateInputs(Order customerOrder, List<OrderBookRecord> availableOrders)
+    private void ValidateInputs(Order customerOrder, List<OrderBookRecord> availableOrders)
     {
         if (customerOrder == null)
         {
+            _logger.LogWarning("Invalid argument {ArgumentName}", nameof(customerOrder));
             throw new ArgumentNullException(nameof(customerOrder));
         }
         if (availableOrders == null)
         {
+            _logger.LogWarning("Invalid argument {ArgumentName}", nameof(availableOrders));
             throw new ArgumentNullException(nameof(availableOrders));
         }
     }
 
-    private static List<Order> ProcessBuyOrders(Order customerOrder, List<OrderBookRecord> availableOrders)
+    private List<Order> ProcessBuyOrders(Order customerOrder, List<OrderBookRecord> availableOrders)
     {
         var sortedAsks = GetSortedAsks(availableOrders);
+        _logger.LogInformation("Found totally {OrderCount} ask order(s) in over {ExchangeCount} exchange(s) ", sortedAsks.Count(), availableOrders.Count);
         var remainingFunds = availableOrders.ToDictionary(r => r.Id, r => r.AvailableFunds!.Euro);
 
         return ProcessOrders(sortedAsks,
@@ -52,9 +49,10 @@ public class OrderAlgorithm : IOrderAlgorithm
         );
     }
 
-    private static List<Order> ProcessSellOrders(Order customerOrder, List<OrderBookRecord> availableOrders)
+    private List<Order> ProcessSellOrders(Order customerOrder, List<OrderBookRecord> availableOrders)
     {
         var sortedBids = GetSortedBids(availableOrders);
+        _logger.LogInformation("Found totally {OrderCount} bid order(s) in over {ExchangeCount} exchange(s) ", sortedBids.Count(), availableOrders.Count);
         var remainingFunds = availableOrders.ToDictionary(r => r.Id, r => r.AvailableFunds!.Crypto);
 
         return ProcessOrders(sortedBids,
@@ -81,7 +79,7 @@ public class OrderAlgorithm : IOrderAlgorithm
             .OrderByDescending(x => x.Order.Price);
     }
 
-    private static List<Order> ProcessOrders(
+    private List<Order> ProcessOrders(
      IEnumerable<(string ExchangeId, Order Order)> sortedOrders,
      decimal remainingAmount,
      Dictionary<string, decimal> remainingFunds,
@@ -108,8 +106,12 @@ public class OrderAlgorithm : IOrderAlgorithm
                 var cost = calculateCost(order, amountToProcess);
                 remainingFunds[exchangeId] -= cost;
                 remainingAmount -= amountToProcess;
+
+                _logger.LogInformation("Order with Id {OrderId} from {ExchangeId} qualifies for original order", order.Id, exchangeId);
             }
         }
+
+        _logger.LogInformation("Found {OrderCount} contra-side order(s) to qualify original order", result.Count);
 
         return result;
     }

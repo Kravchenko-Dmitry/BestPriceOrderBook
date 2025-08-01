@@ -54,8 +54,6 @@ public class OrderBookRepository : IOrderBookRepository
 
         foreach (var file in files)
         {
-            _logger.LogDebug("Reading file: {File}", file);
-
             string? content = null;
 
             try
