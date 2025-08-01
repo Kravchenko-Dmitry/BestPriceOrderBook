@@ -6,6 +6,29 @@ public class OrderAlgorithm : IOrderAlgorithm
 {
     public List<Order> GetOrdersWithBestPrice(Order customerOrder, List<OrderBookRecord> availableOrders)
     {
+        ValidateInputs(customerOrder, availableOrders);
+
+        switch (customerOrder.Type)
+        {
+            // BUY CASE: Customer wants to buy BTC -> limited by each customer Euro account balance on the exchanges as customer can not buy more BTC as he has Euros
+            case OrderType.Buy:
+                {
+                    return ProcessBuyOrders(customerOrder, availableOrders);
+                }
+
+            // SELL CASE: Customer wants to sell BTC -> limited by customer account's BTC amount on each exchange as customer can non sell BTC which he does not have
+            case OrderType.Sell:
+                {
+                    return ProcessSellOrders(customerOrder, availableOrders);
+                }
+
+            default:
+                throw new InvalidOperationException($"Unsupported order type: {customerOrder.Type}");
+        }
+    }
+
+    private static void ValidateInputs(Order customerOrder, List<OrderBookRecord> availableOrders)
+    {
         if (customerOrder == null)
         {
             throw new ArgumentNullException(nameof(customerOrder));
@@ -14,118 +37,93 @@ public class OrderAlgorithm : IOrderAlgorithm
         {
             throw new ArgumentNullException(nameof(availableOrders));
         }
+    }
 
+    private static List<Order> ProcessBuyOrders(Order customerOrder, List<OrderBookRecord> availableOrders)
+    {
+        var sortedAsks = GetSortedAsks(availableOrders);
+        var remainingFunds = availableOrders.ToDictionary(r => r.Id, r => r.AvailableFunds!.Euro);
+
+        return ProcessOrders(sortedAsks,
+            customerOrder.Amount,
+            remainingFunds,
+            (order, availableFunds) => availableFunds / order.Price, // maxAmount from budget
+            (order, amount) => amount * order.Price // cost calculation
+        );
+    }
+
+    private static List<Order> ProcessSellOrders(Order customerOrder, List<OrderBookRecord> availableOrders)
+    {
+        var sortedBids = GetSortedBids(availableOrders);
+        var remainingFunds = availableOrders.ToDictionary(r => r.Id, r => r.AvailableFunds!.Crypto);
+
+        return ProcessOrders(sortedBids,
+            customerOrder.Amount,
+            remainingFunds,
+            (order, availableFunds) => availableFunds, // maxAmount is the available BTC
+            (order, amount) => amount // BTC deduction
+        );
+    }
+
+    private static IEnumerable<(string ExchangeId, Order Order)> GetSortedAsks(List<OrderBookRecord> availableOrders)
+    {
+        return availableOrders
+            .SelectMany(record => record.OrderBook.Asks
+                .Select(ask => (ExchangeId: record.Id, Order: ask.Order)))
+            .OrderBy(x => x.Order.Price);
+    }
+
+    private static IEnumerable<(string ExchangeId, Order Order)> GetSortedBids(List<OrderBookRecord> availableOrders)
+    {
+        return availableOrders
+            .SelectMany(record => record.OrderBook.Bids
+                .Select(bid => (ExchangeId: record.Id, Order: bid.Order)))
+            .OrderByDescending(x => x.Order.Price);
+    }
+
+    private static List<Order> ProcessOrders(
+     IEnumerable<(string ExchangeId, Order Order)> sortedOrders,
+     decimal remainingAmount,
+     Dictionary<string, decimal> remainingFunds,
+     Func<Order, decimal, decimal> calculateMaxAmount,
+     Func<Order, decimal, decimal> calculateCost)
+    {
         var result = new List<Order>();
 
-        switch (customerOrder.Type)
+        foreach (var (exchangeId, order) in sortedOrders)
         {
-            // BUY CASE: Customer wants to buy BTC -> limited by each customer Euro account balance on the exchanges as customer can not buy more BTC as he has Euros
-            case OrderType.Buy:
-                {
-                    var allAsks = availableOrders
-                        .SelectMany(record => record.OrderBook.Asks
-                            .Select(ask => new
-                            {
-                                ExchangeId = record.Id,
-                                Order = ask.Order,
-                            }))
-                        .OrderBy(x => x.Order.Price) // cheapest first
-                        .ToList();
+            if (remainingAmount <= 0)
+            {
+                break;
+            }
 
-                    decimal remainingAmount = customerOrder.Amount;
+            var availableFunds = remainingFunds[exchangeId];
+            var maxAmountFromFunds = calculateMaxAmount(order, availableFunds);
+            var amountToProcess = Math.Min(Math.Min(order.Amount, remainingAmount), maxAmountFromFunds);
 
-                    var remainingEuroPerExchange = availableOrders.ToDictionary(r => r.Id, r => r.AvailableFunds!.Euro);
+            if (amountToProcess > 0)
+            {
+                result.Add(CreateOrderFromTemplate(order, amountToProcess));
 
-                    foreach (var entry in allAsks)
-                    {
-                        if (remainingAmount <= 0)
-                        {
-                            break;
-                        }
-
-                        var euroLeft = remainingEuroPerExchange[entry.ExchangeId];
-                        var maxBtcFromBudget = euroLeft / entry.Order.Price;
-
-                        decimal amountToBuy = Math.Min(entry.Order.Amount, remainingAmount);
-                        amountToBuy = Math.Min(amountToBuy, maxBtcFromBudget);
-
-                        if (amountToBuy > 0)
-                        {
-                            result.Add(new Order
-                            {
-                                Id = entry.Order.Id,
-                                Time = entry.Order.Time,
-                                Kind = entry.Order.Kind,
-                                Type = entry.Order.Type,
-                                Price = entry.Order.Price,
-                                Amount = amountToBuy
-                            });
-
-                            // Deduct EUR spent from this exchange’s remaining budget
-                            remainingEuroPerExchange[entry.ExchangeId] -= amountToBuy * entry.Order.Price;
-                            remainingAmount -= amountToBuy;
-                        }
-                    }
-
-                    break;
-                }
-
-            // SELL CASE: Customer wants to sell BTC -> limited by customer account BTC on each exchange as customer can non sell BTC as he has
-            case OrderType.Sell:
-                {
-                    var allBids = availableOrders
-                        .SelectMany(record => record.OrderBook.Bids
-                            .Select(bid => new
-                            {
-                                ExchangeId = record.Id,
-                                Order = bid.Order
-                            }))
-                        .OrderByDescending(x => x.Order.Price) // highest first
-                        .ToList();
-
-                    decimal remainingAmount = customerOrder.Amount;
-
-                    // Track remaining BTC balance per exchange (customer’s holdings)
-                    var remainingBtcPerExchange = availableOrders.ToDictionary(r => r.Id, r => r.AvailableFunds!.Crypto);
-
-                    foreach (var entry in allBids)
-                    {
-                        if (remainingAmount <= 0)
-                        {
-                            break;
-                        }
-
-                        var btcLeft = remainingBtcPerExchange[entry.ExchangeId];
-
-                        // How much BTC can we sell from this order considering customer’s BTC on this exchange
-                        decimal amountToSell = Math.Min(entry.Order.Amount, remainingAmount);
-                        amountToSell = Math.Min(amountToSell, btcLeft);
-
-                        if (amountToSell > 0)
-                        {
-                            result.Add(new Order
-                            {
-                                Id = entry.Order.Id,
-                                Time = entry.Order.Time,
-                                Kind = entry.Order.Kind,
-                                Type = entry.Order.Type,
-                                Price = entry.Order.Price,
-                                Amount = amountToSell
-                            });
-
-                            // Deduct BTC sold from customer’s remaining BTC balance on this exchange
-                            remainingBtcPerExchange[entry.ExchangeId] -= amountToSell;
-                            remainingAmount -= amountToSell;
-                        }
-                    }
-
-                    break;
-                }
-
-            default:
-                throw new InvalidOperationException($"Unsupported order type: {customerOrder.Type}");
+                var cost = calculateCost(order, amountToProcess);
+                remainingFunds[exchangeId] -= cost;
+                remainingAmount -= amountToProcess;
+            }
         }
 
         return result;
+    }
+
+    private static Order CreateOrderFromTemplate(Order order, decimal amount)
+    {
+        return new Order
+        {
+            Id = order.Id,
+            Time = order.Time,
+            Kind = order.Kind,
+            Type = order.Type,
+            Price = order.Price,
+            Amount = amount
+        };
     }
 }
