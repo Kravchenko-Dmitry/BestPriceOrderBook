@@ -2,8 +2,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OrderBookAlgorithm;
 using OrderBookAlgorithm.DomainClasses;
+using OrderBookConsole;
 
-Console.WriteLine("=== Best Price OrderBook Console ===");
+Console.WriteLine("=== Best Price OrderBook Console ===\n");
 
 using var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((context, services) =>
@@ -16,21 +17,29 @@ using var host = Host.CreateDefaultBuilder(args)
 
 var orderManager = host.Services.GetRequiredService<OrderManager>();
 
+// Ask user
+var selectedType = MenuHelper.GetOrderTypeFromUser(OrderType.Buy);
+var amount = MenuHelper.GetOrderAmountFromUser(0.5m);
+
 var customerOrder = new Order
 {
     Id = Guid.NewGuid(),
     Time = DateTime.UtcNow,
-    Type = OrderType.Buy,
+    Type = selectedType,
     Kind = OrderKind.Limit,
-    Amount = 0.5m
+    Amount = amount,
 };
+
+Console.WriteLine("\n=== Getting the Best Price OrderBooks ===\n");
 
 // Get best price orders
 var bestOrders = await orderManager.ProvideBestPriceOrdersAsync(customerOrder);
 
-Console.WriteLine("=== Best Price Orders ===");
+Console.WriteLine("\n=== Best Price Orders ===\n");
 
 foreach (var order in bestOrders)
 {
     Console.WriteLine($"{order.Type} {order.Amount} BTC @ {order.Price} EUR");
 }
+
+Console.WriteLine("\n=== End of Program ===\n");
