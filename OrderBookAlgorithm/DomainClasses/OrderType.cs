@@ -2,6 +2,6 @@ namespace OrderBookAlgorithm.DomainClasses;
 
 public enum OrderType
 {
-    Buy,
-    Sell
+    Buy = 1,
+    Sell = 2
 }

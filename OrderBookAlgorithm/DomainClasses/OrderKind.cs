@@ -2,6 +2,6 @@ namespace OrderBookAlgorithm.DomainClasses;
 
 public enum OrderKind
 {
-    Limit,
-    Market
+    Limit = 1,
+    Market = 2
 }

@@ -1,7 +1,10 @@
+using System.Text.Json.Serialization;
+
 namespace OrderBookApi.Dto;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum OrderType
 {
-    Buy = 0,
-    Sell = 1
+    Buy = 1,
+    Sell = 2
 }

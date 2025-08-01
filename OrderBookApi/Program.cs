@@ -1,6 +1,5 @@
 using OrderBookAlgorithm;
 using OrderBookApi.Api;
-using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,11 +9,6 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IOrderBookRepository, OrderBookRepository>();
 builder.Services.AddScoped<IOrderAlgorithm, OrderAlgorithm>();
 builder.Services.AddScoped<OrderManager>();
-
-builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
-{
-    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
-});
 
 var app = builder.Build();
 
