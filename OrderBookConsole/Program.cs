@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OrderBookAlgorithm;
 using OrderBookAlgorithm.DomainClasses;
+using OrderBookAlgorithm.FileSystemAccess;
 using OrderBookConsole;
 
 Console.WriteLine("=== Best Price OrderBook Console ===\n");
@@ -9,7 +10,8 @@ Console.WriteLine("=== Best Price OrderBook Console ===\n");
 using var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((context, services) =>
     {
-        services.AddScoped<IOrderBookRepository, OrderBookRepository>();
+        services.AddSingleton<IFileSystem, FileSystem>();
+        services.AddScoped<IOrderBookRepository, FileOrderBookRepository>();
         services.AddScoped<IOrderAlgorithm, OrderAlgorithm>();
         services.AddScoped<OrderManager>();
     })

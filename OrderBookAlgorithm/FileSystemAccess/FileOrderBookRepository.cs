@@ -3,19 +3,23 @@ using OrderBookAlgorithm.DomainClasses;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace OrderBookAlgorithm;
+namespace OrderBookAlgorithm.FileSystemAccess;
 
-public class OrderBookRepository : IOrderBookRepository
+public class FileOrderBookRepository : IOrderBookRepository
 {
-    private readonly ILogger<OrderBookRepository> _logger;
+    private readonly ILogger<FileOrderBookRepository> _logger;
+    private readonly IFileSystem _fileSystem;
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly string _sourceFolderPath;
-    private const string FOLDER_NAME_WITH_SOURCE_FILES = "OrderBookSources";
 
-    public OrderBookRepository(ILogger<OrderBookRepository> logger)
+    public FileOrderBookRepository(ILogger<FileOrderBookRepository> logger, IFileSystem fileSystem, OrderBookRepositoryOptions? options = null)
     {
         _logger = logger;
-        _sourceFolderPath = Path.Combine(AppContext.BaseDirectory, FOLDER_NAME_WITH_SOURCE_FILES);
+        _fileSystem = fileSystem;
+
+        options ??= new OrderBookRepositoryOptions();
+        var basePath = options.BasePath ?? AppContext.BaseDirectory;
+        _sourceFolderPath = Path.Combine(basePath, options.SourceFolderName);
 
         _jsonOptions = new JsonSerializerOptions
         {
@@ -43,13 +47,13 @@ public class OrderBookRepository : IOrderBookRepository
     {
         _logger.LogInformation("Reading order book files from folder: {Folder}", _sourceFolderPath);
 
-        if (!Directory.Exists(_sourceFolderPath))
+        if (!_fileSystem.DirectoryExists(_sourceFolderPath))
         {
             _logger.LogWarning("Source folder does not exist: {Folder}", _sourceFolderPath);
             yield break;
         }
 
-        var files = Directory.GetFiles(_sourceFolderPath);
+        var files = _fileSystem.GetFiles(_sourceFolderPath);
         _logger.LogInformation("Found {Count} order book files.", files.Length);
 
         foreach (var file in files)
@@ -58,7 +62,7 @@ public class OrderBookRepository : IOrderBookRepository
 
             try
             {
-                content = await File.ReadAllTextAsync(file);
+                content = await _fileSystem.ReadAllTextAsync(file);
             }
             catch (IOException ex)
             {

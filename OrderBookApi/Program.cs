@@ -1,4 +1,5 @@
 using OrderBookAlgorithm;
+using OrderBookAlgorithm.FileSystemAccess;
 using OrderBookApi.Api;
 using OrderBookApi.ExceptionHandler;
 
@@ -10,7 +11,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
-builder.Services.AddScoped<IOrderBookRepository, OrderBookRepository>();
+builder.Services.AddSingleton<IFileSystem, FileSystem>();
+builder.Services.AddScoped<IOrderBookRepository, FileOrderBookRepository>();
+
 builder.Services.AddScoped<IOrderAlgorithm, OrderAlgorithm>();
 builder.Services.AddScoped<OrderManager>();
 

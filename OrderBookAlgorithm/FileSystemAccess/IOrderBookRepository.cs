@@ -1,6 +1,6 @@
 using OrderBookAlgorithm.DomainClasses;
 
-namespace OrderBookAlgorithm;
+namespace OrderBookAlgorithm.FileSystemAccess;
 
 public interface IOrderBookRepository
 {
