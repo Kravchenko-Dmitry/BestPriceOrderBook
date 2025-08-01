@@ -1,10 +1,14 @@
 using OrderBookAlgorithm;
 using OrderBookApi.Api;
+using OrderBookApi.ExceptionHandler;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddScoped<IOrderBookRepository, OrderBookRepository>();
 builder.Services.AddScoped<IOrderAlgorithm, OrderAlgorithm>();
@@ -18,6 +22,7 @@ if (app.Environment.IsDevelopment() || Environment.GetEnvironmentVariable("DOTNE
     app.UseSwaggerUI();
 }
 
+app.UseExceptionHandler();
 app.MapOrdersEndpoints();
 
 await app.RunAsync();
