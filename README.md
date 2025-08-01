@@ -22,26 +22,28 @@ It supports:
 
 ```
 BestPriceOrderBook/
-│ BestPriceOrderBook.sln
+│ OrderBookSolution.sln
 │
 ├── OrderBookAlgorithm/ # Core business logic & algorithm
 │ ├── DomainClasses/ # Order, OrderBookRecord, enums
+│ ├── OrderBookSources/ # Sample JSON order book data
+│ ├── FileSystemAccess/ # Classes to acces local file system, including OrderBookRepository.cs
 │ ├── OrderAlgorithm.cs # Best-price calculation logic
-│ ├── OrderBookRepository.cs # Reads JSON order books
 │ └── ...
-| └── OrderBookSources/ # Sample JSON order book data
 │
-├── OrderBookApi/ # Minimal API project
+├── OrderBookApi/ # Minimal API project to start OrderBookAlgorithm
 │ ├── Api/OrdersEndpoints.cs
 │ ├── Program.cs # API setup (Swagger, DI)
 │ ├── Dockerfile # Docker container setup
+│ └── ...
+├── OrderBookConsole/ # Console Application to start OrderBookAlgorithm
+│ ├── Program.cs # Console App setup (Dependencies)...
 │ └── ...
 │
 ├── OrderBookAlgorithm.Tests/ # Unit tests (xUnit + Moq)
 │ ├── OrderAlgorithmTests.cs
 │ ├── OrderBookRepositoryTests.cs
-│ └── ...
-
+│ ├── FileOrderBookRepositoryTests.cs
 
 ```
 
@@ -74,13 +76,13 @@ The algorithm picks the **cheapest combination** while respecting available bala
 
 ## **🚀 Running Locally**
 
-### **1. Clone the repo**
+### **Clone the repo**
 ```bash
 git clone https://github.com/Kravchenko-Dmitry/BestPriceOrderBook.git
 cd BestPriceOrderBook
 ```
 
-### **🚀 Running Locally**
+### **Running Locally as WebApp**
 
 N.B.: Port number may vary
 
@@ -88,6 +90,13 @@ N.B.: Port number may vary
 dotnet build
 dotnet run --project OrderBookApi
 http://localhost:5194/swagger
+```
+
+### **Running Locally as Console App**
+
+```
+dotnet build
+dotnet run --project OrderBookConsole
 ```
 
 ## **🐳 Running in Docker**
@@ -111,7 +120,7 @@ http://localhost:8080/swagger
 
 ## **📌 API Endpoints**
 
-### ***POST /orders/bestprice**    
+### ***POST /orders/bestprice***    
 Finds the best execution plan for a given order.
 
 ### ***Request Body***
