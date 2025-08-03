@@ -18,6 +18,31 @@ It supports:
 
 ---
 
+## **⚙ Features**
+- **Part 1**: Algorithm to find the **best execution plan** for a BTC order.
+- **Part 2**: Minimal API service using **Kestrel**.
+- **Bonus**:
+  - Unit tests for algorithm & repository.
+  - Docker deployment.
+
+---
+
+## **🧮 Example**
+Given multiple exchange order books:
+
+Exchange A: 3 BTC @ 3000 EUR, 2 BTC @ 3300 EUR
+Exchange B: 5 BTC @ 3100 EUR
+
+
+If you want to **buy 9 BTC**:
+- Buy **4 BTC** from Exchange A (3 BTC x 3k EUR, 1 BTC x 3.3k EUR)
+- Buy **5 BTC** from Exchange B (3.1k EUR)
+- **Total = 27,800 EUR**
+
+The algorithm picks the **cheapest combination** while respecting available balances.
+
+---
+
 ## **📂 Solution Structure**
 
 ```
@@ -49,28 +74,80 @@ BestPriceOrderBook/
 
 ---
 
-## **⚙ Features**
-- **Part 1**: Algorithm to find the **best execution plan** for a BTC order.
-- **Part 2**: Minimal API service using **Kestrel**.
-- **Bonus**:
-  - Unit tests for algorithm & repository.
-  - Docker deployment.
+## **🏗️ Class Dependencies & Architecture Diagram**
 
----
+### **Interface Implementations**
+| Interface | Implementation | Description |
+|-----------|----------------|-------------|
+| `IOrderAlgorithm` | `OrderAlgorithm` | Core algorithm for finding best prices |
+| `IOrderBookRepository` | `FileOrderBookRepository` | Repository for loading order book data |
+| `IFileSystem` | `FileSystem` | File system abstraction for testability |
 
-## **🧮 Example**
-Given multiple exchange order books:
+### **Dependency Graph**
+```
+                                ┌─────────────────────────────────────┐
+                                │           OrderBookApi              │
+                                │  ┌─────────────────────────────┐    │
+                                │  │     OrdersEndpoints         │    │
+                                │  │   (REST API Controller)     │    │
+                                │  └─────────────┬───────────────┘    │
+                                │                │                    │
+                                │                ▼                    │
+                                │  ┌─────────────────────────────┐    │
+                                │  │         OrderManager        │◄───┼─── Orchestrates the process
+                                │  │       (Service Layer)       │    │
+                                │  └─────────────┬───────────────┘    │
+                                └────────────────┼────────────────────┘
+                                                 │
+                                                 ▼
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                             OrderBookAlgorithm                                                 │
+│                                                                                                                │
+│  ┌─────────────────────────────┐    │  ┌─────────────────────────────┐    │  ┌─────────────────────────────┐   │
+│  │     IOrderAlgorithm         │    │  │  IOrderBookRepository       │    │  │     Domain Classes          │   │
+│  │      (Interface)            │    │  │      (Interface)            │    │  │   ┌─────────────────────┐   │   │
+│  └─────────────┬───────────────┘    │  └─────────────┬───────────────┘    │  │   │   OrderBookRecord   │   │   │
+│                │                    │                │                    │  │   │   Balance           │   │   │
+│                ▼                    │                ▼                    │  │   │   OrderBook         │   │   │
+│  ┌─────────────────────────────┐    │  ┌─────────────────────────────┐    │  │   │   OrderEntry        │   │   │
+│  │     OrderAlgorithm          │    │  │  FileOrderBookRepository    │    │  │   │   Order             │   │   │
+│  │ (Business Logic/Algorithm)  │    │  │    (Data Access Layer)      │    │  │   │   OrderType (enum)  │   │   │
+│  └─────────────────────────────┘    │  └─────────────┬───────────────┘    │  │   │   OrderKind (enum)  │   │   │
+│                                     │                │                    │  │   └─────────────────────┘   │   │
+│                                     │                ▼                    │  └─────────────────────────────┘   │
+│                                     │  ┌─────────────────────────────┐    │                                    │
+│                                     │  │      IFileSystem            │    │                                    │
+│                                     │  │      (Interface)            │    │                                    │
+│                                     │  └─────────────┬───────────────┘    │                                    │
+│                                     │                │                    │                                    │
+│                                     │                ▼                    │                                    │
+│                                     │  ┌─────────────────────────────┐    │                                    │
+│                                     │  │      FileSystem             │    │                                    │
+│                                     │  │  (File System Wrapper)      │    │                                    │
+│                                     │  └─────────────────────────────┘    │                                    │
+│                                     │                                     │                                    │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
-Exchange A: 3 BTC @ 3000 EUR, 2 BTC @ 3300 EUR
-Exchange B: 5 BTC @ 3100 EUR
+```
 
+### **Data Flow**
+```
+HTTP Request → OrdersEndpoints → OrderManager → OrderAlgorithm → IOrderBookRepository → FileOrderBookRepository → IFileSystem → FileSystem
+                                                      ↑                                                                          │
+                                                      └──────────── OrderBookRecord (Domain Objects) ←─────────────────────────
+```
 
-If you want to **buy 9 BTC**:
-- Buy **4 BTC** from Exchange A (3 BTC x 3k EUR, 1 BTC x 3.3k EUR)
-- Buy **5 BTC** from Exchange B (3.1k EUR)
-- **Total = 27,800 EUR**
-
-The algorithm picks the **cheapest combination** while respecting available balances.
+### **Key Dependencies**
+- **OrderManager** depends on:
+  - `IOrderBookRepository` (data access)
+  - `IOrderAlgorithm` (business logic)
+- **OrderAlgorithm** depends on:
+  - Domain classes (`Order`, `OrderBookRecord`, etc.)
+- **FileOrderBookRepository** depends on:
+  - `IFileSystem` (file operations abstraction)
+  - Domain classes for deserialization
+- **FileSystem** depends on:
+  - System.IO namespace (concrete file operations)
 
 ---
 
@@ -98,6 +175,7 @@ http://localhost:5194/swagger
 dotnet build
 dotnet run --project OrderBookConsole
 ```
+---
 
 ## **🐳 Running in Docker**
  
@@ -117,6 +195,7 @@ N.B.: In Browser please use **HTTP** protocol (and not HTTPS)
 ```
 http://localhost:8080/swagger
 ```
+---
 
 ## **📌 API Endpoints**
 
