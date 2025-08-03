@@ -85,21 +85,22 @@ BestPriceOrderBook/
 
 ### **Dependency Graph**
 ```
-                                ┌─────────────────────────────────────┐
-                                │           OrderBookApi              │
-                                │  ┌─────────────────────────────┐    │
-                                │  │     OrdersEndpoints         │    │
-                                │  │   (REST API Controller)     │    │
-                                │  └─────────────┬───────────────┘    │
-                                │                │                    │
-                                │                ▼                    │
-                                │  ┌─────────────────────────────┐    │
-                                │  │         OrderManager        │◄───┼── Orchestrates the process
-                                │  │       (Service Layer)       │    │
-                                │  └─────────────┬───────────────┘    │
-                                └────────────────┼────────────────────┘
-                                                 │
-                                                 ▼
+ ┌─────────────────────────────────────┐             ┌─────────────────────────────────────┐ 
+ │           OrderBookApi              │             │           OrderBookConsole          │
+ │  ┌─────────────────────────────┐    │             │  ┌─────────────────────────────┐    │
+ │  │     OrdersEndpoints         │    │             │  │     OrdersEndpoints         │    │
+ │  │   (REST API Controller)     │    │             │  │   (REST API Controller)     │    │
+ │  └─────────────┬───────────────┘    │             │  └─────────────┬───────────────┘    │
+ │                │                    │             │                │                    │
+ │                ▼                    │             │                ▼                    │
+ │  ┌─────────────────────────────┐    │             │  ┌─────────────────────────────┐    │
+ │  │         OrderManager        │◄───┼ Orchestrates│  │         OrderManager        │◄───┼── Orchestrates 
+ │  │       (Service Layer)       │    │ the process │  │       (Service Layer)       │    │   the process 
+ │  └─────────────┬───────────────┘    │             │  └─────────────┬───────────────┘    │
+ └────────────────┼────────────────────┘             └────────────────┼────────────────────┘
+                  │                                                   │
+                  ──────────────────────────────┬──────────────────────
+                                                ▼
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                           OrderBookAlgorithm                                        │
 │                                                                                                     │
@@ -134,7 +135,7 @@ BestPriceOrderBook/
 ```
 HTTP Request → OrdersEndpoints → OrderManager → OrderAlgorithm → IOrderBookRepository → FileOrderBookRepository → IFileSystem → FileSystem
                                                       ↑                                                                          │
-                                                      └──────────── OrderBookRecord (Domain Objects) ←─────────────────────────
+                                                      └──────────── OrderBookRecord (Domain Objects) ←───────────────────────────
 ```
 
 ### **Key Dependencies**
