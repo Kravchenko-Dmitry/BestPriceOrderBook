@@ -94,8 +94,8 @@ BestPriceOrderBook/
  │                │                    │             │                │                    │
  │                ▼                    │             │                ▼                    │
  │  ┌─────────────────────────────┐    │             │  ┌─────────────────────────────┐    │
- │  │         OrderManager        │◄───┼ Orchestrates│  │         OrderManager        │◄───┼── Orchestrates 
- │  │       (Service Layer)       │    │ the process │  │       (Service Layer)       │    │   the process 
+ │  │         OrderManager        │◄───┼ Orchestrates│  │         OrderManager        │◄───┼ Orchestrates 
+ │  │       (Service Layer)       │    │ the process │  │       (Service Layer)       │    │ the process 
  │  └─────────────┬───────────────┘    │             │  └─────────────┬───────────────┘    │
  └────────────────┼────────────────────┘             └────────────────┼────────────────────┘
                   │                                                   │
