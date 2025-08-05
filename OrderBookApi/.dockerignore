@@ -1,0 +1,89 @@
+# ============================================
+# .NET & C# build artifacts
+# ============================================
+**/bin/
+**/obj/
+**/out/
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+[Bb]uild[Ll]og.*
+[Bb]ld/
+[Ll]og/
+[Ll]ogs/
+
+# Test results
+[Tt]est[Rr]esult*/
+*.VisualState.xml
+TestResult.xml
+nunit-*.xml
+
+# Coverage reports
+coverage*.xml
+coverage*.json
+coverage*.info
+lcov.info
+
+# NuGet artifacts
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+!packages/build/
+
+# ============================================
+# IDE-specific
+# ============================================
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+*.userprefs
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# JetBrains Rider
+.idea/
+
+# ============================================
+# Git & Docker metadata
+# ============================================
+.git/
+.gitignore
+.gitattributes
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# ============================================
+# OS-generated files
+# ============================================
+.DS_Store
+ehthumbs.db
+Thumbs.db
+desktop.ini
+.Spotlight-V100
+.Trashes
+
+# ============================================
+# Temporary & backup files
+# ============================================
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+*.bak
+*.old
+
+# ============================================
+# Environment files (secrets)
+# ============================================
+.env
+.env.*
